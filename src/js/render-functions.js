@@ -68,9 +68,9 @@ export function hideLoader() {
 }
 
 export function showLoadMoreButton() {
-  loadMoreBtn.classList.remove('is-hidden');
+  loadMoreBtn.classList.add('is-visible');
 }
 
 export function hideLoadMoreButton() {
-  loadMoreBtn.classList.add('is-hidden');
+  loadMoreBtn.classList.remove('is-visible');
 }

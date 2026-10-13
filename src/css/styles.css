@@ -99,10 +99,12 @@ img {
   display: block;
 }
 
-.is-hidden {
-  display: none;
-}
 
 .load-more-btn {
+  display: none;
   margin-bottom: 20px;
+}
+
+.load-more-btn.is-visible {
+  display: block;
 }

@@ -1,18 +1,17 @@
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
-import { getImagesByQuery } from './js/pixabay-api.js';
+import { getImagesByQuery, PER_PAGE } from './js/pixabay-api.js';
 import {
   createGallery,
   clearGallery,
   showLoader,
   hideLoader,
   showLoadMoreButton,
-  hideLoadMoreButton
+  hideLoadMoreButton,
 } from './js/render-functions.js';
 
 let searchString = '';
 let page = 1;
-
 const form = document.querySelector('.form');
 const loadMoreBtn = document.querySelector('.load-more-btn');
 
@@ -22,9 +21,9 @@ loadMoreBtn.addEventListener('click', loadMore);
 async function onSubmit(event) {
   event.preventDefault();
 
-  searchString = form.elements['search-text'].value.trim();
+  const query = form.elements['search-text'].value.trim();
 
-  if (searchString.length === 0) {
+  if (query.length === 0) {
     iziToast.error({
       title: 'Error',
       message: 'Query can not be empty!',
@@ -34,8 +33,11 @@ async function onSubmit(event) {
     return;
   }
 
+  searchString = query;
+  page = 1;
   clearGallery();
   showLoader();
+  hideLoadMoreButton();
 
   try {
     const data = await getImagesByQuery(searchString, page);
@@ -51,42 +53,50 @@ async function onSubmit(event) {
     }
 
     createGallery(data.hits);
-    showLoadMoreButton();
+    updateLoadMoreBtn(data.totalHits);
   } catch (error) {
-    iziToast.error({
-      message: `Something went wrong: ${error.message}`,
-      position: 'topRight',
-    });
+    showGeneralError(error);
   } finally {
     hideLoader();
   }
-
 }
 
-async function loadMore () {
+async function loadMore() {
   showLoader();
 
   try {
     const data = await getImagesByQuery(searchString, page + 1);
-
     page += 1;
     createGallery(data.hits);
     smoothScrolling();
+    updateLoadMoreBtn(data.totalHits);
   } catch (error) {
-    hideLoadMoreButton();
-     iziToast.error({
-      message: "We're sorry, but you've reached the end of search results.",
-      position: 'center',
-    });
+    showGeneralError(error);
   } finally {
     hideLoader();
   }
 }
 
-function smoothScrolling() {
-    const card = document.querySelector('.gallery-item');
+function updateLoadMoreBtn(total) {
+  const loadedImages = PER_PAGE * page;
 
-  if (card.length === 0) {
+  if (loadedImages >= total) {
+    hideLoadMoreButton();
+
+    iziToast.info({
+      message:
+        'We\'re sorry, but you\'ve reached the end of search results.',
+      position: 'center',
+    });
+  } else {
+    showLoadMoreButton();
+  }
+}
+
+function smoothScrolling() {
+  const card = document.querySelector('.gallery-item');
+
+  if (!card) {
     return;
   }
 
@@ -95,5 +105,12 @@ function smoothScrolling() {
   window.scrollBy({
     top: height * 2,
     behavior: 'smooth',
+  });
+}
+
+function showGeneralError(error) {
+  iziToast.error({
+    message: `Something went wrong: ${error.message}`,
+    position: 'center',
   });
 }
